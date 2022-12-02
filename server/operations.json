@@ -1,0 +1,9 @@
+{
+    "PLUS": "plus",
+    "MINUS": "minus",
+    "TIMES": "times",
+    "DIVIDE": "divide",
+    "POW": "pow",
+    "ABS": "abs",
+    "FACT": "fact"
+}
