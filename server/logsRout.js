@@ -1,9 +1,15 @@
 const express = require('express')
+const StatusCodes = require('http-status-codes').StatusCodes;
 const {stackLogger, independentLogger, requestLogger} = require('./logger');
 
 function handleGetLevel(req, res) {
     let loggerName = req?.query['logger-name'];
     let loggerLevel;
+
+    if(!loggerName) {
+        res.status( StatusCodes.CONFLICT );
+        res.send("Wrong request query!");
+    }
 
     if(loggerName == 'request-logger') {
         loggerLevel = requestLogger.level;
@@ -13,12 +19,17 @@ function handleGetLevel(req, res) {
         loggerLevel = independentLogger.level;
     }
 
-    res.send(`Success: ${loggerLevel.toUpperCase()}`);
+    res.send(loggerLevel.toUpperCase());
 }
 
 function handlePutLevel(req, res) {
     let loggerName = req?.query['logger-name'];
     let loggerLevel = req?.query['logger-level'];
+
+    if(!loggerName || !loggerLevel) {
+        res.status( StatusCodes.CONFLICT );
+        res.send("Wrong request query!");
+    }
 
     if(loggerName == 'request-logger') {
         requestLogger.level = loggerLevel.toLowerCase();
@@ -28,7 +39,7 @@ function handlePutLevel(req, res) {
         independentLogger.level = loggerLevel.toLowerCase();
     }
 
-    res.send(`Success: ${loggerLevel.toUpperCase()}`);
+    res.send(loggerLevel.toUpperCase());
 }
 
 const router = express.Router();

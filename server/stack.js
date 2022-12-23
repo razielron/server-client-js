@@ -59,7 +59,7 @@ function operate(req, res) {
         }
 
         logErrorMessage(req, errorMessage);
-        res.status( StatusCodes.BAD_REQUEST );
+        res.status( StatusCodes.CONFLICT );
         res.json({ "error-message": errorMessage });
         return;
     }

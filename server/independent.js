@@ -20,7 +20,7 @@ function calculateAPI(req, res) {
     let operation = req.body.operation;
 
     if(errorMessage = isValidBody(arguments, operation)) {
-        res.status( StatusCodes.BAD_REQUEST );
+        res.status( StatusCodes.CONFLICT );
         res.json({ "error-message": errorMessage });
         return;
     }
