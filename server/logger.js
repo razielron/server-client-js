@@ -2,27 +2,19 @@ const winston = require('winston');
 
 const handleRequestFormat = winston.format.printf((data) => {
     const { level, message, timestamp } = data;
-    const args = data[Symbol.for('splat')][0];
+    const splat = data[Symbol.for('splat')];
+    let args;
+    
+    if(splat) args = splat[0];
 
-    return `${timestamp} ${level.toUpperCase()}: ${message} | request #${args.requestNumber}`;
-});
-
-const requestLoggerFormat = winston.format.printf((data) => {
-    const { level } = data;
-    const args = data[Symbol.for('splat')][0];
-
-    if(winston.config.syslog.levels[level] == winston.config.syslog.levels.info) {
-        return `Incoming request | #${args.requestNumber} | resource: ${args.resourceName} | HTTP Verb ${args.httpVerb}`;
-    } else {
-        return `request #${args.requestNumber} duration: ${args.duration}ms`;
-    }
+    return `${timestamp} ${level.toUpperCase()}: ${message} | request #${args?.requestNumber}`;
 });
 
 const requestLogger = winston.createLogger({
     level: 'info',
     format: winston.format.combine(
         winston.format.timestamp({ format: 'DD-MM-YYYY HH:mm:ss.SSS' }),
-        requestLoggerFormat
+        handleRequestFormat
     ),
     transports: [
       new winston.transports.File({ filename: './logs/requests.log' }),

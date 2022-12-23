@@ -7,15 +7,25 @@ const {stackLogger} = require('./logger');
 
 const Stack = [];
 
-function logErrorMessage(errorMessage) {
+function reverseArr(input) {
+    var ret = new Array;
+    for(var i = input.length-1; i >= 0; i--) {
+        ret.push(input[i]);
+    }
+    return ret;
+}
+
+function logErrorMessage(req, errorMessage) {
     let meta = { requestNumber: req.app.locals.requestCounter };
     stackLogger.error(`Server encountered an error ! message: ${errorMessage}`, meta);
 }
 
 function size(req, res) {
     let meta = { requestNumber: req.app.locals.requestCounter };
+    let reveredStack = reverseArr(Stack);
+    
     stackLogger.info(`Stack size is ${Stack.length}`, meta);
-    stackLogger.debug(`Stack content (first == top): [${Stack.join(',')}]`, meta);
+    stackLogger.debug(`Stack content (first == top): [${reveredStack.join(', ')}]`, meta);
     res.json({result: Stack.length});
 }
 
@@ -48,7 +58,7 @@ function operate(req, res) {
             errorMessage = `Error: cannot implement operation ${operation}. It requires ${argNum} arguments and the stack has only ${Stack.length} arguments`;
         }
 
-        logErrorMessage(errorMessage);
+        logErrorMessage(req, errorMessage);
         res.status( StatusCodes.BAD_REQUEST );
         res.json({ "error-message": errorMessage });
         return;
@@ -106,9 +116,9 @@ function deleteArguments(req, res) {
 
 const router = express.Router();
 
-router.get('/size', (req, res) => { size(req, res ) } );
-router.put('/arguments', (req, res) => { putArguments(req, res ) } );
-router.get('/operate', (req, res) => { operate(req, res ) } );
-router.delete('/arguments', (req, res) => { deleteArguments(req, res ) } );
+router.get('/size', (req, res, next) => { size(req, res); next(); } );
+router.put('/arguments', (req, res, next) => { putArguments(req, res); next(); } );
+router.get('/operate', (req, res, next) => { operate(req, res); next(); } );
+router.delete('/arguments', (req, res, next) => { deleteArguments(req, res); next(); } );
 
 module.exports = router;

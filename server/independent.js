@@ -40,6 +40,6 @@ function calculateAPI(req, res) {
 
 const router = express.Router();
 
-router.post('/calculate', (req, res) => { calculateAPI(req, res ) } );
+router.post('/calculate', (req, res, next) => { calculateAPI(req, res); next(); } );
 
 module.exports = router;
