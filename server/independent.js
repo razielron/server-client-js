@@ -3,6 +3,16 @@ const StatusCodes = require('http-status-codes').StatusCodes;
 const operationsList = require('./operations.json');
 const {calculate, isBadOperation} = require('./calculate');
 const {isValidBody} = require('./requestValidator');
+const { independentLogger } = require('./logger');
+const { append } = require('express/lib/response');
+
+function printLog(operation, arguments, result, requestCounter) {
+    let stringArguments = arguments.join(',');
+    let meta = { requestNumber: requestCounter }
+
+    independentLogger.info(`Performing operation ${operation}. Result is ${result}`, meta);
+    independentLogger.debug(`Performing operation: ${operation}(${stringArguments}) = ${result}`, meta);
+}
 
 function calculateAPI(req, res) {
     let errorMessage, result;
@@ -24,6 +34,7 @@ function calculateAPI(req, res) {
     }
 
     result = calculate({arguments, operation});
+    printLog(req.body.operation, arguments, result, req.app.locals.requestCounter);
     res.json({ result });
 }
 

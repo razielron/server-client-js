@@ -3,20 +3,33 @@ const StatusCodes = require('http-status-codes').StatusCodes;
 const operationsList = require('./operations.json');
 const {calculate, isBadOperation} = require('./calculate');
 const {isValidBody} = require('./requestValidator');
+const {stackLogger} = require('./logger');
 
 const Stack = [];
 
+function logErrorMessage(errorMessage) {
+    let meta = { requestNumber: req.app.locals.requestCounter };
+    stackLogger.error(`Server encountered an error ! message: ${errorMessage}`, meta);
+}
+
 function size(req, res) {
+    let meta = { requestNumber: req.app.locals.requestCounter };
+    stackLogger.info(`Stack size is ${Stack.length}`, meta);
+    stackLogger.debug(`Stack content (first == top): [${Stack.join(',')}]`, meta);
     res.json({result: Stack.length});
 }
 
 function putArguments(req, res) {
     let {arguments} = req.body;
+    let oldStuckSize = Stack.length;
 
     for(let i = 0; i < arguments.length; i++) {
         Stack.push(arguments[i]);
     }
 
+    let meta = { requestNumber: req.app.locals.requestCounter };
+    stackLogger.info(`Adding total of ${arguments.length} argument(s) to the stack | Stack size: ${Stack.length}`, meta);
+    stackLogger.debug(`Adding arguments: ${arguments.join(',')} | Stack size before ${oldStuckSize} | stack size after ${Stack.length}`, meta);
     res.json({result: Stack.length});
 }
 
@@ -35,6 +48,7 @@ function operate(req, res) {
             errorMessage = `Error: cannot implement operation ${operation}. It requires ${argNum} arguments and the stack has only ${Stack.length} arguments`;
         }
 
+        logErrorMessage(errorMessage);
         res.status( StatusCodes.BAD_REQUEST );
         res.json({ "error-message": errorMessage });
         return;
@@ -52,12 +66,16 @@ function operate(req, res) {
         }
     
         Stack.push(arguments.pop());
+        logErrorMessage(errorMessage);
         res.status( StatusCodes.CONFLICT );
         res.json({ "error-message": errorMessage });
         return;
     }
 
     result = calculate({arguments, operation});
+    let meta = { requestNumber: req.app.locals.requestCounter };
+    stackLogger.info(`Performing operation ${req?.query?.operation}. Result is ${result} | stack size: ${Stack.length}`, meta);
+    stackLogger.debug(`Performing operation: ${req?.query?.operation}(${arguments.join(',')}) = ${result}`, meta);
     res.json({ result });
 }
 
@@ -71,6 +89,7 @@ function deleteArguments(req, res) {
 
     if(count > Stack.length) {
         let errorMessage = `Error: cannot remove ${count} from the stack. It has only ${Stack.length} arguments`;
+        logErrorMessage(errorMessage);
         res.status( StatusCodes.CONFLICT );
         res.json({ "error-message": errorMessage });
         return;
@@ -80,6 +99,8 @@ function deleteArguments(req, res) {
         Stack.pop();
     }
 
+    let meta = { requestNumber: req.app.locals.requestCounter };
+    stackLogger.info(`Removing total ${count} argument(s) from the stack | Stack size: ${Stack.length}`, meta);
     res.json({result: Stack.length});
 }
 
